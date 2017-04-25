@@ -6,6 +6,7 @@ Description: Build a chat between two computers that combines high-level encrypt
 import pygame
 import scapy
 import datetime
+from cryptography.fernet import Fernet
 
 
 def sender():
@@ -49,24 +50,37 @@ class EncodeMessage():
     def __init__(self, msg, encrypt):
         self.msg = msg
         self.encrypt = encrypt
+        self.new_msg = []
 
     def caesar_cipher(self, num):
-        new_msg = []
+        self.new_msg = []
         for letter in self.msg:
             if 97 < ord(letter) < 122:
                 if ord(letter) + num > 122:
                     letter_help = ord(letter) + num - 122
-                    new_msg.append(ord('a') + letter_help)
+                    self.new_msg.append(ord('a') + letter_help)
                 else:
-                    new_msg.append(ord(letter) + num)
+                    self.new_msg.append(ord(letter) + num)
             elif 65 < ord(letter) < 90:
                 if ord(letter) + num > 90:
                     letter_help = ord(letter) + num - 90
-                    new_msg.append(ord('A') + letter_help)
+                    self.new_msg.append(ord('A') + letter_help)
                 else:
-                    new_msg.append(ord(letter) + num)
-        return new_msg
+                    self.new_msg.append(ord(letter) + num)
+        return self.new_msg
 
+    def symmetric_encryption(self, *args):
+        self.new_msg = []
+
+        if args:
+            key = args
+
+        else:
+            key = Fernet.generate_key()
+
+        f = Fernet(key)
+        self.new_msg.append(f.encrypt(self.msg))
+        return self.new_msg
 
 class DecodeMessage():
     """
@@ -76,6 +90,7 @@ class DecodeMessage():
     def __init__(self, msg, encrypt):
         self.msg = msg
         self.encrypt = encrypt
+        self.new_msg = ""
 
     def caesar_cipher(self, num):
         new_msg = []
@@ -96,7 +111,13 @@ class DecodeMessage():
         for letter in new_msg:
             new_string.append(chr(letter))
 
-        return "".join(new_string)
+        self.new_msg = "".join(new_string)
+        return self.new_msg
+
+    def symmetric_encryption(self, key):
+        f = Fernet(key)
+        self.new_msg = f.decrypt(self.msg[0])
+        return self.new_msg
 
 
 def main():
